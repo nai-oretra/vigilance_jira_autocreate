@@ -219,7 +219,7 @@ def getInfos(bulletinID):
     desc = root.findall('./description')[0].text
     url = root.findall('./url')[0].text
     competence = root.findall('./competence')[0].text
-    cvss3 = root.findall('./cvss_score')[0].text
+    # cvss3 = root.findall('./cvss_score')[0].text
     # for cvss in root.findall('./cvsss/cvss'):
     #     cvss_vecteur = cvss.find('cvss_vecteur').text
     #     if 'CVSS:3.0' in cvss_vecteur:
