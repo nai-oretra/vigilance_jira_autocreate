@@ -3,11 +3,16 @@ A Simply code to autocreate jira's issue with Vigilance (Vigil@nce) vulnerabilit
 this is functionnal with a Vigilance functionnal account : https://vigilance.fr/ and a Jira On Premise installation. 
 I will add a CRON task to create issue every day (without week-end) when it's possible. 
 
-TODO :
-I want to create a specific field in my Jira Issue for to not have all the information in a single description. 
+TODO : 
+I want to autodetect when it's a linux's package (Ubuntu, redhat, Debian...) and add the information like the CVSS score, if the OS is affected or not etc... See you soon
+# What do you need : 
+* Python 3
+* Jira (pip install jira)
 
-Add a specific field for the CVE / reference
-Add a specific field for the product and version affected
-Add a spécific field for the solution
-Add a specific field for the CVSS 3.0 vector
-Add a specific field for the CVSS 3.0 Temporal Score. 
+
+# How it's work : 
+It's very easy. 
+* Download the project
+* Extract to a directory
+* Run Windows Powershell in the directory if you are on Windows
+* python .\Vigilance_jira.py
