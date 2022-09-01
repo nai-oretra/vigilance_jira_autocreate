@@ -213,21 +213,58 @@ def getInfos(bulletinID):
 
     root = ElementTree.fromstring(content)
 
-    titre = root.findall('./titre')[0].text
+        titre = root.findall('./titre')[0].text
+    produit = root.findall('./composants/composant/composant_nom')[0].text
     ref = root.findall('./referencebulletin')[0].text
     gravite = root.findall('./gravite')[0].text
     desc = root.findall('./description')[0].text
     url = root.findall('./url')[0].text
     competence = root.findall('./competence')[0].text
-    # cvss3 = root.findall('./cvss_score')[0].text
-    # for cvss in root.findall('./cvsss/cvss'):
-    #     cvss_vecteur = cvss.find('cvss_vecteur').text
-    #     if 'CVSS:3.0' in cvss_vecteur:
-    #         cvssv3_score = cvss.find('cvss_score').text
+    for cvss in root.findall('./cvsss/cvss'):
+         cvss_vecteur = cvss.find('cvss_vecteur').text
+         if 'CVSS:3.0' in cvss_vecteur:
+            
+             cvssv3_score = cvss.find('cvss_score').text
+             cvss3_score_deci = float(cvssv3_score) #convert score cvss 3.0 text to decimal because the jira custom field need decimal and not text
+             
+             # Se referer à une calculatrice CVSS comme par exemple : https://nvd.nist.gov/vuln-metrics/cvss/v3-calculator
+             if "AV:N" in cvss_vecteur: #Analyse le vecteur d'attaque "Attack Vector" (AV). Si sur N alors attaque possible depuis Internet. 
+                Attack_vector = "Network"
+             if "AV:A" in cvss_vecteur: #Analyse le vecteur d'attaque "Attack Vector" (AV). Si sur A alors attaque possible depuis Reseaux Interne. 
+                Attack_vector = "Adjacent Network"
+             if "AV:L" in cvss_vecteur: #Analyse le vecteur d'attaque "Attack Vector" (AV). Si sur L alors attaque possible depuis la machine uniquement. 
+                Attack_vector = "Local"
+             if "AV:P" in cvss_vecteur: #Analyse le vecteur d'attaque "Attack Vector" (AV). Si sur P alors attaque possible uniquement physiquement. 
+                Attack_vector = "Physique" 
+             if "E:U" in cvss_vecteur: #Analyse si un exploit est disponible ou pas via le vecteur "Exploit Code Maturity (E)". Si sur U alors pas d'exploit disponible.
+                Exploit = "Non"
+             if "E:P" in cvss_vecteur: #Analyse si un exploit est disponible ou pas via le vecteur "Exploit Code Maturity (E)". Si sur P ou F ou H alors exploit disponible.
+                Exploit = "Oui"
+             if "E:F" in cvss_vecteur: #Analyse si un exploit est disponible ou pas via le vecteur "Exploit Code Maturity (E)". Si sur P ou F ou H alors exploit disponible.
+                Exploit = "Oui"
+             if "E:H" in cvss_vecteur: #Analyse si un exploit est disponible ou pas via le vecteur "Exploit Code Maturity (E)". Si sur P ou F ou H alors exploit disponible.
+                Exploit = "Oui"
+
     references = []
+    sources = []
     print('      Titre:', titre)
+    print('      Attack vector:', Attack_vector) 
+    print('      Produits concernés :', produit)
     print('      Gravité:', gravite + '/4')
     print('      Compétence:', competence)
+    print('      Exploit disponible ? :', Exploit)
+    print('      Description:', desc)
+    print('      CVSS vecteur:', cvss_vecteur)
+    print('      Score CVSS 3.0:', cvssv3_score)
+
+    for source in root.findall('./sources/source/source_origine'):
+        source = source.text
+        if source.startswith('https'):
+            sources.append(source)
+    sources = ',\n'.join(sources)
+    if sources:
+        print('      Source:', sources)
+
     for reference in root.findall('./references/reference'):
         reference = reference.text
         if reference.startswith('CVE'):
@@ -241,20 +278,26 @@ def getInfos(bulletinID):
     consequences = ', '.join(consequences)
     print('      Conséquence:', consequences)
 
-    composantlist = []
-    for composant in root.findall('./composants/composant'):
-        composant_nom = composant.find('composant_nom').text
-        composant_version = composant.find('composant_version').text
-    print('composant', composantlist)
+    composantlist_version = []
+    for composant in root.findall('./composants/composant/composant_version'):
+        composantlist_version.append(composant.text)
+    composantlist_version = ', '.join(composantlist_version)
+    composant_version = produit + " " + composantlist_version
+    print('      Composant vulnérables:', composant_version)
 
-    # Création JIRA
-    #For Help : https://jira.readthedocs.io/examples.html#issues 
+    # Création ticket JIRA
     creation = {
-        "project": "YOURPROJECT",
-        "summary": "[VIGILANCE-VUL-" + bulletinID + "] " + titre,
-        "issuetype": {"name": "YOURISSUETYPE"},
-        'description': '' + desc,
-    }
-    new_issue = jira.create_issue(fields=creation)
+        "project": "YOURPROJECT", #Nom du projet JIRA sur lequel les tickets seront crées
+        "summary": "[VIGILANCE-VUL-" + bulletinID + "] " + titre, #Mise en forme du titre pour uniformisation ex [VIGILANCE-VUL-153001]
+        "issuetype": {"name": "Bulletin de sécurité"}, #Type de ticket à adapter selon projet.
+        "customfield_17111": cvss3_score_deci, #Score CVSS décimal sur le ticket JIRA
+        "customfield_17000": references, #CVE à inscrire
+        "customfield_17006": cvss_vecteur,
+        "customfield_17003": {"value" : Exploit},
+        "customfield_17100": "" + composant_version,
+        "customfield_17101": "***NOTE***\n***********************************************\nCes informations sont tirées automatiquement du bulletin de sécurité fournit par Vigilance. \nElles ne refletent pas la réalité du Systeme d'Information, une analyse environnementale doit être réalisée. Verifier les commentaires de ce ticket. \nSe referer au processus et aux modes opératoires associés. \n***********************************************" + "\n\nDescription : " + desc + "\n \nConséquences : " + consequences + "\n \nCompétence de l'attaquant nécessaire : " + competence + "\n\nVecteur d'attaque : " + Attack_vector +"\n\nSource(s) d'information(s) : \n" + sources, #Description dans le custom field
+        "assignee" : {"name": "YOUTNAME"}, #Mettre le nom du responsable. 
+         }
+    new_issue = jira.create_issue(fields=creation) #fonction pour creer un ticket
 
 main()
