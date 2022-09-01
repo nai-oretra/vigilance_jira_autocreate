@@ -8,6 +8,8 @@ I want to autodetect when it's a linux's package (Ubuntu, redhat, Debian...) and
 # What do you need : 
 * Python 3
 * Jira (pip install jira)
+* An Vigilance account of course
+* Get flower for your wife but it's not obligatory (but it's very advised :D )
 
 
 # How it's work : 
