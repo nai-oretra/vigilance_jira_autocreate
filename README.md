@@ -18,3 +18,4 @@ It's very easy.
 * Extract to a directory
 * Run Windows Powershell in the directory if you are on Windows
 * python .\Vigilance_jira.py
+![image](https://user-images.githubusercontent.com/59687222/222750758-ab2ff146-279c-4c26-a488-1b2568651381.png)
